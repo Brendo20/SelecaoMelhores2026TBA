@@ -60,7 +60,7 @@ function render(){
  $('#send').disabled=state.pending||!state.config.open||!complete('selection')||!complete('gold');
  $('#send').textContent=state.pending?'Enviando seus votos…':'Enviar meus votos →';
  $('#voter-name').disabled=state.pending;$('#voter-team').disabled=state.pending;
- $('#final-availability').textContent=state.config.open?'Seus dois votos serão enviados juntos ao confirmar.':'A votação está fechada. Você pode revisar as escolhas, mas o envio ainda não está disponível.';
+ $('#final-availability').textContent=state.config.open?'Seus dois votos serão enviados juntos ao confirmar.':statusMessage();
  if(state.step===1)reviewList('selection',$('#selection-review-list'));
  if(state.step===3){reviewList('selection',$('#final-selection-list'));reviewList('gold',$('#final-gold-list'));}
  if(state.receipt){$('#receipt').textContent=state.receipt;return;}
@@ -140,7 +140,7 @@ try{
  state.players=await rosterResponse.json();state.config=await configResponse.json();
  if(state.config.resultsAvailable)loadResults();
  $('#availability').textContent=state.config.open?'● Votação aberta':'Votação indisponível';
- if(!state.config.open)$('#notice').textContent='Você pode montar e revisar suas escolhas. O envio estará disponível quando a votação abrir.';
+ if(!state.config.open)$('#notice').textContent=statusMessage();
  render();
 }catch(error){$('#availability').textContent='Falha de conexão';$('#notice').textContent=error.message;}
 
@@ -159,4 +159,9 @@ async function loadResults(){
   section.append(list);grid.append(section);
  }
  }catch(error){$('#results-error').textContent=error.message;}
+}
+
+function statusMessage(){
+ const messages={not_configured:'A conexão com a planilha ainda não foi configurada na Vercel.',connection_failed:'Não foi possível conectar à planilha. A organização deve conferir a URL e a implantação do Apps Script.',connection_rejected:'A planilha recusou a conexão. A organização deve conferir se os segredos da Vercel e do Apps Script são iguais.',script_outdated:'A implantação do Apps Script precisa ser atualizada para a versão atual.',script_closed:'A votação está fechada no Apps Script.',vercel_closed:'A votação está desabilitada na configuração da Vercel.'};
+ return (messages[state.config.reason]||'A votação ainda não está disponível.')+' Você pode montar e revisar suas escolhas enquanto isso.';
 }
