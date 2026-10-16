@@ -1,0 +1,326 @@
+[
+  {
+    "id": "preto-01",
+    "team": "Preto",
+    "name": "Lucas Soares",
+    "position": "line"
+  },
+  {
+    "id": "preto-02",
+    "team": "Preto",
+    "name": "Sano",
+    "position": "line"
+  },
+  {
+    "id": "preto-03",
+    "team": "Preto",
+    "name": "Chagas",
+    "position": "line"
+  },
+  {
+    "id": "preto-04",
+    "team": "Preto",
+    "name": "Euller",
+    "position": "line"
+  },
+  {
+    "id": "preto-05",
+    "team": "Preto",
+    "name": "DIEGO Victor",
+    "position": "line"
+  },
+  {
+    "id": "preto-06",
+    "team": "Preto",
+    "name": "Junior Valenca",
+    "position": "line"
+  },
+  {
+    "id": "preto-07",
+    "team": "Preto",
+    "name": "Marciel",
+    "position": "line"
+  },
+  {
+    "id": "preto-08",
+    "team": "Preto",
+    "name": "Diego Guerra",
+    "position": "line"
+  },
+  {
+    "id": "preto-09",
+    "team": "Preto",
+    "name": "Victor Almeida",
+    "position": "line"
+  },
+  {
+    "id": "preto-10",
+    "team": "Preto",
+    "name": "Davi",
+    "position": "line"
+  },
+  {
+    "id": "preto-11",
+    "team": "Preto",
+    "name": "Joesley",
+    "position": "line"
+  },
+  {
+    "id": "preto-12",
+    "team": "Preto",
+    "name": "Esaú",
+    "position": "line"
+  },
+  {
+    "id": "branco-01",
+    "team": "Branco",
+    "name": "Welison Freire",
+    "position": "line"
+  },
+  {
+    "id": "branco-02",
+    "team": "Branco",
+    "name": "Diogo",
+    "position": "line"
+  },
+  {
+    "id": "branco-03",
+    "team": "Branco",
+    "name": "Eric",
+    "position": "line"
+  },
+  {
+    "id": "branco-04",
+    "team": "Branco",
+    "name": "Gislando",
+    "position": "line"
+  },
+  {
+    "id": "branco-05",
+    "team": "Branco",
+    "name": "Joao Pedro",
+    "position": "line"
+  },
+  {
+    "id": "branco-06",
+    "team": "Branco",
+    "name": "Rai Marcos",
+    "position": "line"
+  },
+  {
+    "id": "branco-07",
+    "team": "Branco",
+    "name": "Douglas Lira",
+    "position": "line"
+  },
+  {
+    "id": "branco-08",
+    "team": "Branco",
+    "name": "Guilherme Vilanova",
+    "position": "line"
+  },
+  {
+    "id": "branco-09",
+    "team": "Branco",
+    "name": "Tito",
+    "position": "line"
+  },
+  {
+    "id": "branco-10",
+    "team": "Branco",
+    "name": "Samuel",
+    "position": "line"
+  },
+  {
+    "id": "branco-11",
+    "team": "Branco",
+    "name": "Anderson",
+    "position": "line"
+  },
+  {
+    "id": "branco-12",
+    "team": "Branco",
+    "name": "Joao Filho",
+    "position": "line"
+  },
+  {
+    "id": "azul-01",
+    "team": "Azul",
+    "name": "Isac Fialho",
+    "position": "line"
+  },
+  {
+    "id": "azul-02",
+    "team": "Azul",
+    "name": "Fernando",
+    "position": "line"
+  },
+  {
+    "id": "azul-03",
+    "team": "Azul",
+    "name": "Guilherme",
+    "position": "line"
+  },
+  {
+    "id": "azul-04",
+    "team": "Azul",
+    "name": "Junior Lemos",
+    "position": "line"
+  },
+  {
+    "id": "azul-05",
+    "team": "Azul",
+    "name": "Raidom",
+    "position": "line"
+  },
+  {
+    "id": "azul-06",
+    "team": "Azul",
+    "name": "Jasson",
+    "position": "line"
+  },
+  {
+    "id": "azul-07",
+    "team": "Azul",
+    "name": "Pedro Lucas",
+    "position": "line"
+  },
+  {
+    "id": "azul-08",
+    "team": "Azul",
+    "name": "Colombiano",
+    "position": "line"
+  },
+  {
+    "id": "azul-09",
+    "team": "Azul",
+    "name": "Giulio",
+    "position": "line"
+  },
+  {
+    "id": "azul-10",
+    "team": "Azul",
+    "name": "Brendo",
+    "position": "line"
+  },
+  {
+    "id": "azul-11",
+    "team": "Azul",
+    "name": "Saul",
+    "position": "line"
+  },
+  {
+    "id": "azul-12",
+    "team": "Azul",
+    "name": "Thalyson",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-01",
+    "team": "Vermelho",
+    "name": "Paulo Warison",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-02",
+    "team": "Vermelho",
+    "name": "Wellington",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-03",
+    "team": "Vermelho",
+    "name": "Karllos",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-04",
+    "team": "Vermelho",
+    "name": "Jean",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-05",
+    "team": "Vermelho",
+    "name": "Alysson",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-06",
+    "team": "Vermelho",
+    "name": "Cryslan",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-07",
+    "team": "Vermelho",
+    "name": "Mayran",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-08",
+    "team": "Vermelho",
+    "name": "Renato",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-09",
+    "team": "Vermelho",
+    "name": "Claudio",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-10",
+    "team": "Vermelho",
+    "name": "Beethoven",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-11",
+    "team": "Vermelho",
+    "name": "Johne",
+    "position": "line"
+  },
+  {
+    "id": "vermelho-12",
+    "team": "Vermelho",
+    "name": "Emanuel",
+    "position": "line"
+  },
+  {
+    "id": "goleiro-1",
+    "team": "Azul",
+    "name": "Arlem",
+    "position": "goalkeeper"
+  },
+  {
+    "id": "goleiro-2",
+    "team": "Branco",
+    "name": "Matheus",
+    "position": "goalkeeper"
+  },
+  {
+    "id": "goleiro-3",
+    "team": "Vermelho",
+    "name": "Medrado",
+    "position": "goalkeeper"
+  },
+  {
+    "id": "goleiro-4",
+    "team": "Vermelho",
+    "name": "Junior",
+    "position": "goalkeeper"
+  },
+  {
+    "id": "goleiro-5",
+    "team": "Preto",
+    "name": "Ochoa",
+    "position": "goalkeeper"
+  },
+  {
+    "id": "goleiro-6",
+    "team": "Preto",
+    "name": "Carlin",
+    "position": "goalkeeper"
+  }
+]
