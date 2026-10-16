@@ -25,7 +25,13 @@ export default async function handler(req,res){
  try{
   const response=await fetch(process.env.GOOGLE_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'admin_results',secret:process.env.GOOGLE_SCRIPT_SECRET}),signal:AbortSignal.timeout(20000)});
   const data=await response.json();
-  if(!response.ok||!data.ok||!Array.isArray(data.results)||!data.summary)return res.status(502).json({error:'Atualize a implantação do Apps Script com o novo Code.gs. Confira também a URL e o segredo de conexão.'});
+  if(!response.ok)return res.status(502).json({code:'SCRIPT_HTTP_ERROR',error:'O Apps Script não respondeu corretamente. Confira a implantação do aplicativo da Web.'});
+  if(!data.ok){
+   if(data.error==='Acesso negado.')return res.status(502).json({code:'SCRIPT_ACCESS_DENIED',error:'O Apps Script recusou a conexão. Confira o segredo configurado na Vercel.'});
+   if(String(data.error||'').includes('apurar'))return res.status(502).json({code:'SHEET_RECORDS_ERROR',error:'O Apps Script recebeu a consulta, mas não conseguiu apurar os registros da aba Votos. A implantação já reconhece o painel; precisamos conferir os registros da planilha.'});
+   return res.status(502).json({code:'SCRIPT_OUTDATED',error:'A versão publicada do Apps Script ainda não reconhece a consulta do painel. No Apps Script: Implantar → Gerenciar implantações → Editar (lápis) → Versão: Nova versão → Implantar. Salvar o código não atualiza a implantação.'});
+  }
+  if(!Array.isArray(data.results)||!data.summary)return res.status(502).json({code:'SCRIPT_OUTDATED',error:'A resposta do Apps Script pertence a uma versão antiga. Publique uma nova versão da implantação existente.'});
   return res.status(200).json({ok:true,open:Boolean(data.open)&&process.env.VOTING_OPEN==='true',updatedAt:data.updatedAt,summary:data.summary,results:data.results});
  }catch{return res.status(502).json({error:'Não foi possível consultar a planilha. Tente atualizar novamente.'});}
 }
