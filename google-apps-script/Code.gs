@@ -35,12 +35,37 @@ function validChoices_(category,ids){
  if(chosen.some(p=>!p))return false;
  return category==='gold'?chosen.length===10:chosen.length===7&&chosen.filter(p=>p.position==='goalkeeper').length===1&&chosen.filter(p=>p.position==='line').length===6;
 }
+function tally_(records){
+ const counts={selection:{},gold:{}},points={};
+ records.forEach(row=>{
+  const data=JSON.parse(row[5]);
+  const votes=row[2]==='ballot'?[['selection',data.selection],['gold',data.gold]]:[[row[2],data]];
+  votes.forEach(([category,ids])=>{
+   if(!counts[category]||!validChoices_(category,ids))throw new Error('Há voto antigo ou inválido. Use uma planilha da votação atual.');
+   ids.forEach((id,index)=>{counts[category][id]=(counts[category][id]||0)+1;if(category==='gold')points[id]=(points[id]||0)+(10-index);});
+  });
+ });
+ const rows=['selection','gold'].flatMap(category=>ATHLETES.map(p=>[category,p.position==='goalkeeper'?'Goleiro':'Linha',p.id,p.name,p.team,counts[category][p.id]||0,category==='gold'?(points[p.id]||0):0]).sort((a,b)=>(category==='gold'?b[6]-a[6]:b[5]-a[5])||a[3].localeCompare(b[3],'pt-BR')));
+ return rows;
+}
 function doPost(e){
  let data;
  try{if(!e||!e.postData||e.postData.contents.length>8192)return json_({ok:false,error:'Requisição inválida.'});data=JSON.parse(e.postData.contents);}catch(_){return json_({ok:false,error:'Requisição inválida.'});}
  const props=PropertiesService.getScriptProperties(),secret=props.getProperty('SHARED_SECRET');
  if(!secret||data.secret!==secret)return json_({ok:false,error:'Acesso negado.'});
  if(data.action==='status')return json_({ok:true,open:props.getProperty('VOTING_OPEN')==='true',resultsAvailable:props.getProperty('RESULTS_PUBLISHED')==='true'&&props.getProperty('VOTING_OPEN')!=='true'});
+
+ if(data.action==='admin_results'){
+  try{
+   const records=db_().getSheetByName('Votos').getDataRange().getValues().slice(1);
+   const rows=tally_(records),ballots=records.filter(row=>row[2]==='ballot');
+   const byTeam={Preto:0,Branco:0,Vermelho:0,Azul:0};
+   ballots.forEach(row=>{if(Object.prototype.hasOwnProperty.call(byTeam,row[4]))byTeam[row[4]]++;});
+   const recent=[...ballots].sort((a,b)=>new Date(b[0])-new Date(a[0])).slice(0,20).map(row=>({date:new Date(row[0]).toISOString(),name:String(row[3]),team:String(row[4])}));
+   return json_({ok:true,open:props.getProperty('VOTING_OPEN')==='true',updatedAt:new Date().toISOString(),summary:{totalBallots:ballots.length,byTeam,lastVote:recent[0]?.date||null,recent},results:rows.map(r=>({category:r[0],position:r[1],id:r[2],name:r[3],team:r[4],votes:r[5],points:r[6]}))});
+  }catch(_){return json_({ok:false,error:'Não foi possível apurar os registros. Confira a estrutura dos votos.'});}
+ }
+
  if(data.action==='results'){
   if(props.getProperty('VOTING_OPEN')==='true'||props.getProperty('RESULTS_PUBLISHED')!=='true')return json_({ok:false,error:'Resultados ainda não publicados.'});
   const rows=db_().getSheetByName('Resultados').getDataRange().getValues().slice(1);
@@ -73,16 +98,7 @@ function encerrarEApurar(){
  try{
  PropertiesService.getScriptProperties().setProperty('VOTING_OPEN','false');
  PropertiesService.getScriptProperties().setProperty('RESULTS_PUBLISHED','false');
- const db=init_(),counts={selection:{},gold:{}},points={};
- db.getSheetByName('Votos').getDataRange().getValues().slice(1).forEach(row=>{
-  const data=JSON.parse(row[5]);
-  const votes=row[2]==='ballot'?[['selection',data.selection],['gold',data.gold]]:[[row[2],data]];
-  votes.forEach(([category,ids])=>{
-   if(!counts[category]||!validChoices_(category,ids))throw new Error('Há voto antigo ou inválido. Use uma planilha da votação atual.');
-   ids.forEach((id,index)=>{counts[category][id]=(counts[category][id]||0)+1;if(category==='gold')points[id]=(points[id]||0)+(10-index);});
-  });
- });
- const rows=['selection','gold'].flatMap(category=>ATHLETES.map(p=>[category,p.position==='goalkeeper'?'Goleiro':'Linha',p.id,p.name,p.team,counts[category][p.id]||0,category==='gold'?(points[p.id]||0):0]).sort((a,b)=>(category==='gold'?b[6]-a[6]:b[5]-a[5])||a[3].localeCompare(b[3],'pt-BR')));
+ const db=init_(),rows=tally_(db.getSheetByName('Votos').getDataRange().getValues().slice(1));
  const sheet=db.getSheetByName('Resultados');sheet.getRange('A2:G').clearContent();sheet.getRange(2,1,rows.length,7).setValues(rows);
  SpreadsheetApp.flush();
  PropertiesService.getScriptProperties().setProperty('RESULTS_PUBLISHED','true');

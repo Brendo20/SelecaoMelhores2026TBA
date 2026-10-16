@@ -114,3 +114,18 @@ test('Apps Script não grava nenhuma categoria quando uma delas é inválida',()
  assert.equal(post({...ballot,selection:[...ballot.selection].reverse()}).ok,true);
  assert.equal(rows.Votos.length,2);
 });
+
+test('Parciais administrativas usam a mesma apuração sem encerrar ou publicar',()=>{
+ const {post,rows,props}=harness();
+ post(ballot);
+ const beforeVotes=rows.Votos.length,beforeResults=rows.Resultados.length;
+ const partial=post({action:'admin_results'});
+ assert.equal(partial.ok,true);assert.equal(partial.open,true);
+ assert.equal(partial.summary.totalBallots,1);assert.equal(partial.summary.byTeam.Azul,1);
+ assert.equal(partial.results.filter(r=>r.category==='gold').reduce((sum,r)=>sum+r.points,0),55);
+ assert.equal(partial.results.find(r=>r.category==='gold'&&r.id===top10[0]).points,10);
+ assert.equal(props.VOTING_OPEN,'true');assert.notEqual(props.RESULTS_PUBLISHED,'true');
+ assert.equal(post({action:'results'}).ok,false);
+ assert.equal(rows.Votos.length,beforeVotes);assert.equal(rows.Resultados.length,beforeResults);
+ const denied=post({action:'admin_results',secret:'wrong'});assert.equal(denied.ok,false);assert.equal(denied.results,undefined);
+});

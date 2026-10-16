@@ -4,6 +4,7 @@ import path from 'node:path';
 import config from '../api/config.js';
 import vote from '../api/vote.js';
 import results from '../api/results.js';
+import admin from '../api/admin.js';
 try{process.loadEnvFile('.env.local');}catch(error){if(error.code!=='ENOENT')throw error;}
 const publicRoot=path.resolve('public');
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json; charset=utf-8'};
@@ -13,12 +14,13 @@ http.createServer(async(req,res)=>{
  const pathname=new URL(req.url,'http://localhost').pathname;
  if(pathname==='/api/config')return config(req,res);
  if(pathname==='/api/results')return results(req,res);
- if(pathname==='/api/vote'){
+ if(pathname==='/api/admin'&&req.method!=='POST')return await admin(req,res);
+ if(pathname==='/api/vote'||pathname==='/api/admin'){
  let body='';for await(const chunk of req){body+=chunk;if(body.length>8192)return res.status(413).json({error:'Requisição muito grande.'});}
  try{req.body=JSON.parse(body);}catch{return res.status(400).json({error:'JSON inválido.'});}
- return await vote(req,res);
+ return await (pathname==='/api/admin'?admin:vote)(req,res);
  }
- const file=path.resolve(publicRoot,'.'+decodeURIComponent(pathname==='/'?'/index.html':pathname));
+ const file=path.resolve(publicRoot,'.'+decodeURIComponent(pathname==='/'?'/index.html':pathname==='/admin'?'/admin.html':pathname));
  if(!file.startsWith(publicRoot+path.sep))return res.status(403).end();
  const content=await readFile(file);res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');res.end(content);
  }catch{res.status(404).end('Não encontrado');}

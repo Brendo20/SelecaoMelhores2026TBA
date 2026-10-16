@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#2d1247"><meta name="robots" content="noindex,nofollow"><title>TBA 2026 • Painel da organização</title><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/admin.css"><script type="module" src="/admin.js"></script></head>
+<body><header><a class="brand" href="/"><span class="brand-icon">T</span>TBA<span class="brand-sub">ORGANIZAÇÃO · 2026</span></a><a class="public-link" href="/">Ir para a votação ↗</a></header>
+<main class="admin-main">
+<section id="login-panel" class="review-panel login-panel"><span class="eyebrow dark">ACESSO RESTRITO</span><h1>O campeonato em números.</h1><p>Entre para acompanhar a votação e os resultados parciais.</p><form id="admin-login"><label for="admin-password">Senha do painel</label><input type="password" id="admin-password" autocomplete="current-password" required maxlength="200" placeholder="Digite sua senha"><button id="login-button" type="submit" class="submit">Entrar no painel →</button></form><p id="login-error" role="status" aria-live="polite"></p></section>
+<section id="dashboard" hidden aria-labelledby="dashboard-title">
+<div class="admin-heading"><div><span class="eyebrow dark">PAINEL PRIVADO</span><h1 id="dashboard-title">A votação, de perto.</h1><p>Parciais exclusivas da organização. A atualização não encerra nem publica resultados.</p></div><button id="logout" class="secondary">Sair do painel</button></div>
+<div class="admin-toolbar"><span id="admin-status" class="status">Consultando votação…</span><span id="updated-at"></span><label class="auto-refresh"><input id="auto-refresh" type="checkbox" checked> Atualizar a cada 30 segundos</label><button id="refresh" class="secondary">Atualizar agora ↻</button></div>
+<p id="dashboard-error" role="status" aria-live="polite"></p>
+<div class="metrics"><article><span>Cédulas completas</span><strong id="total-ballots">—</strong><small>Seleção + Bola de Ouro</small></article><article><span>Pontos distribuídos</span><strong id="total-points">—</strong><small>Soma da Bola de Ouro</small></article><article><span>Último voto</span><strong id="last-vote" class="date-metric">—</strong><small>Horário de Brasília</small></article></div>
+<section class="team-section"><h2>Participação por time</h2><div id="team-stats" class="team-stats"></div></section>
+<div class="admin-note"><strong>Resultados parciais</strong><p>Seleção: 1 goleiro e 6 jogadores de linha por votos. Bola de Ouro: soma de 10 a 1 ponto por cédula. Empates permanecem empatados e dependem do regulamento. Nome e time são autodeclarados; cédulas não representam necessariamente pessoas únicas.</p></div>
+<div id="admin-rankings" class="admin-rankings"></div>
+<section class="recent-section"><h2>Últimas cédulas recebidas</h2><p>Até 20 registros recentes, com os nomes informados pelos eleitores.</p><div class="table-scroll"><table><thead><tr><th>Data e hora</th><th>Nome</th><th>Time</th></tr></thead><tbody id="recent-votes"></tbody></table></div></section>
+</section></main></body></html>

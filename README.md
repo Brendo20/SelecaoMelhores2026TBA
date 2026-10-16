@@ -136,3 +136,15 @@ Se já houver votos do formato anterior de um único atleta, use uma planilha no
 4. Revisar as duas categorias, informar nome/time e clicar em Enviar meus votos.
 
 Voltar ou editar preserva as escolhas durante a sessão na página. Não há gravação nas revisões intermediárias. A API aceita apenas cédulas completas e grava as duas categorias em uma única linha da aba Votos, com categoria ballot e um único protocolo. Reenvios do mesmo id_envio devolvem o protocolo, sem duplicar. A apuração continua separando selection e gold nos resultados. A aba Resultados mantém categoria selection ou gold. Atualize a implantação do Apps Script ao publicar esta versão. As escolhas ficam em memória; atualizar ou fechar a página antes de enviar descarta o rascunho.
+
+## Painel privado da organização
+
+Acesse /admin para consultar cédulas completas, participação por time, últimas 20 cédulas e as classificações parciais. As parciais não são publicadas para os eleitores. O painel não altera, apaga, abre ou encerra a votação.
+
+1. Em Vercel → Settings → Environment Variables, crie ADMIN_PASSWORD com a senha escolhida para o painel. Não coloque a senha no repositório, no frontend, na URL nem em SHARED_SECRET.
+2. Reimplante a aplicação após configurar a variável.
+3. Substitua o código do Apps Script pelo Code.gs atualizado. Salve, vá em Implantar → Gerenciar implantações → Editar → Nova versão → Implantar. Preserve as propriedades existentes e a URL /exec.
+4. Entre em /admin com a senha configurada. A sessão dura 4 horas, usa cookie HttpOnly e SameSite=Strict, com Secure na Vercel. Sair apaga o cookie. Trocar ADMIN_PASSWORD invalida as sessões depois da nova implantação.
+5. A atualização automática consulta a cada 30 segundos enquanto a página está visível e a opção está marcada. Também existe Atualizar agora.
+
+Os rankings mostram votos na Seleção e pontos/indicações na Bola de Ouro. Empates recebem a mesma posição. Os totais contam cédulas, não pessoas únicas. Votos de teste existentes também entram na contagem. Login tem limite de tentativas por IP em cada instância da função; em múltiplas instâncias, o limite não é global. O endpoint público de resultados continua bloqueado antes do encerramento. O segredo entre Vercel e Apps Script também autoriza a consulta administrativa e deve permanecer privado.
