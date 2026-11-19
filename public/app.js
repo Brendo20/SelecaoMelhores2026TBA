@@ -1,6 +1,6 @@
 const $=selector=>document.querySelector(selector);
 const categories={selection:'Seleção do Campeonato',gold:'Bola de Ouro'};
-const state={players:[],step:0,position:'goalkeeper',team:'Todos',search:'',picks:{selection:new Set(),gold:new Set()},config:{open:false},pending:false,request:null,receipt:null};
+const state={players:[],step:0,position:'goalkeeper',team:'Todos',search:'',picks:{selection:new Set(),gold:new Set()},config:{open:false},pending:false,request:null,receipt:null,identity:null};
 const norm=value=>value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 function selected(category=state.step<2?'selection':'gold'){
  const list=[...state.picks[category]].map(id=>state.players.find(p=>p.id===id));
@@ -45,13 +45,15 @@ function reviewList(category,host){
 }
 function render(){
  const category=state.step<2?'selection':'gold',editing=state.step===0||state.step===2;
- $('#edit-workspace').hidden=!editing||Boolean(state.receipt);
- $('#selection-review').hidden=state.step!==1||Boolean(state.receipt);
- $('#final-review').hidden=state.step!==3||Boolean(state.receipt);
+ $('#entry-panel').hidden=Boolean(state.identity)||Boolean(state.receipt);
+ $('#enter-voting').disabled=!state.players.length;
+ $('#edit-workspace').hidden=!state.identity||!editing||Boolean(state.receipt);
+ $('#selection-review').hidden=!state.identity||state.step!==1||Boolean(state.receipt);
+ $('#final-review').hidden=!state.identity||state.step!==3||Boolean(state.receipt);
  $('#success').hidden=!state.receipt;
- $('#flow-steps').hidden=Boolean(state.receipt);
+ $('#flow-steps').hidden=!state.identity||Boolean(state.receipt);
  const titles=['Monte a sua Seleção','Revise sua Seleção','Monte seu top 10 da Bola de Ouro','Revise e envie seus votos'];
- $('#vote-title').textContent=state.receipt?'Votos registrados!':titles[state.step];
+ $('#vote-title').textContent=state.receipt?'Votos registrados!':!state.identity?'Identifique seu voto':titles[state.step];
  document.querySelectorAll('[data-step]').forEach(el=>{
   const n=Number(el.dataset.step);el.classList.toggle('current',n===state.step);el.classList.toggle('done',n<state.step);
   if(n===state.step)el.setAttribute('aria-current','step');else el.removeAttribute('aria-current');
@@ -59,7 +61,7 @@ function render(){
  document.querySelectorAll('[data-go]').forEach(b=>{b.disabled=state.pending;});
  $('#send').disabled=state.pending||!state.config.open||!complete('selection')||!complete('gold');
  $('#send').textContent=state.pending?'Enviando seus votos…':'Enviar meus votos →';
- $('#voter-name').disabled=state.pending;$('#voter-team').disabled=state.pending;
+ $('#identity-summary').textContent=state.identity?state.identity.name+' · '+roleLabels[state.identity.role]+' · '+state.identity.team:'';
  $('#final-availability').textContent=state.config.open?'Seus dois votos serão enviados juntos ao confirmar.':statusMessage();
  if(state.step===1)reviewList('selection',$('#selection-review-list'));
  if(state.step===3){reviewList('selection',$('#final-selection-list'));reviewList('gold',$('#final-gold-list'));}
@@ -119,14 +121,32 @@ document.querySelectorAll('[data-team]').forEach(b=>b.addEventListener('click',(
 document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(Number(b.dataset.go))));
 $('#search').addEventListener('input',e=>{state.search=e.target.value;render();});
 $('#review').addEventListener('click',()=>{const category=state.step===0?'selection':'gold';if(complete(category))go(state.step+1);});
+
+
+function syncVoterTeam(){
+ const org=$('#voter-role').value==='organizacao',field=$('#voter-team');
+ field.querySelector('[value="Organização"]').hidden=!org;
+ if(org)field.value='Organização';else if(field.value==='Organização')field.value='';
+ field.disabled=org;
+}
+$('#voter-role').addEventListener('change',syncVoterTeam);
+syncVoterTeam();
+
+const roleLabels={capitao:'Capitão',organizacao:'Organização',atleta:'Atleta',tecnico:'Técnico'};
+$('#entry-form').addEventListener('submit',event=>{
+ event.preventDefault();const name=$('#voter-name').value.trim(),role=$('#voter-role').value,team=role==='organizacao'?'Organização':$('#voter-team').value;
+ if(name.length<2||name.length>100||(!Object.hasOwn(roleLabels,role)||(role!=='organizacao'&&!['Preto','Branco','Vermelho','Azul'].includes(team)))){$('#entry-error').textContent='Informe seu nome, perfil e time.';return;}
+ state.identity={name,role,team};$('#entry-error').textContent='';render();$('#vote-title').focus();$('#voting-flow').scrollIntoView({block:'start'});
+});
+$('#edit-identity').addEventListener('click',()=>{if(state.pending)return;state.identity=null;render();$('#voter-name').focus();});
 $('#vote-form').addEventListener('submit',async e=>{
  e.preventDefault();
  if(state.pending||state.step!==3||!state.config.open||!complete('selection')||!complete('gold'))return;
- const name=$('#voter-name').value.trim(),team=$('#voter-team').value;
- if(name.length<2||!['Preto','Branco','Vermelho','Azul'].includes(team)){$('#send-notice').textContent='Informe seu nome e selecione seu time.';return;}
+ if(!state.identity){$('#send-notice').textContent='Informe seu nome e perfil antes de enviar.';return;}
+ const {name,role,team}=state.identity;
  state.pending=true;$('#send-notice').textContent='';render();
  try{
-  const payload={selection:[...state.picks.selection],gold:[...state.picks.gold],name,team},signature=JSON.stringify(payload);
+  const payload={selection:[...state.picks.selection],gold:[...state.picks.gold],name,role,team},signature=JSON.stringify(payload);
   if(!state.request||state.request.signature!==signature)state.request={signature,id:crypto.randomUUID()};
   const response=await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,requestId:state.request.id})});
   const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível registrar seus votos.');
@@ -142,7 +162,7 @@ try{
  $('#availability').textContent=state.config.open?'● Votação aberta':'Votação indisponível';
  if(!state.config.open)$('#notice').textContent=statusMessage();
  render();
-}catch(error){$('#availability').textContent='Falha de conexão';$('#notice').textContent=error.message;}
+}catch(error){$('#availability').textContent='Falha de conexão';$('#notice').textContent=error.message;$('#entry-error').textContent=error.message;}
 
 async function loadResults(){
  const host=$('#results');host.hidden=false;
@@ -153,15 +173,12 @@ async function loadResults(){
  const grid=$('#results-grid');grid.replaceChildren();
  for(const [category,position,title] of groups){
   const section=element('div','result-card');section.append(element('h3','',title));
-  const ranked=data.results.filter(r=>r.category===category&&(!position||r.position===position)).sort((a,b)=>(category==='gold'?b.points-a.points:b.votes-a.votes)||a.name.localeCompare(b.name,'pt-BR'));
+  const ranked=data.results.filter(r=>r.category===category&&(!position||r.position===position)).sort((a,b)=>(category==='gold'?b.points-a.points:b.weightedVotes-a.weightedVotes)||a.name.localeCompare(b.name,'pt-BR'));
   const list=element('ol','ranking');
-  for(const row of ranked){const li=element('li');li.append(element('span','',row.name+' · '+row.team),element('strong','',category==='gold'?row.points+' pontos · '+row.votes+' indicações':row.votes+' voto'+(row.votes===1?'':'s')));list.append(li);}
+  for(const row of ranked){const li=element('li');li.append(element('span','',row.name+' · '+row.team),element('strong','',category==='gold'?row.points+' pontos · '+row.votes+' indicações':row.weightedVotes+' votos'));list.append(li);}
   section.append(list);grid.append(section);
  }
  }catch(error){$('#results-error').textContent=error.message;}
 }
 
-function statusMessage(){
- const messages={not_configured:'A conexão com a planilha ainda não foi configurada na Vercel.',connection_failed:'Não foi possível conectar à planilha. A organização deve conferir a URL e a implantação do Apps Script.',connection_rejected:'A planilha recusou a conexão. A organização deve conferir se os segredos da Vercel e do Apps Script são iguais.',script_outdated:'A implantação do Apps Script precisa ser atualizada para a versão atual.',script_closed:'A votação está fechada no Apps Script.',vercel_closed:'A votação está desabilitada na configuração da Vercel.'};
- return (messages[state.config.reason]||'A votação ainda não está disponível.')+' Você pode montar e revisar suas escolhas enquanto isso.';
-}
+function statusMessage(){return (state.config.reason==='not_configured'?'A conexão com o banco ainda não foi configurada.':'A votação está fechada.')+' Você pode montar e revisar suas escolhas enquanto isso.';}

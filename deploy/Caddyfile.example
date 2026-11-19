@@ -1,0 +1,7 @@
+# Acrescente somente este bloco ao Caddy compartilhado existente.
+# HML deve usar outro hostname e outro alias de container.
+votacao-tba.estacaolab.com.br {
+    encode zstd gzip
+    header Strict-Transport-Security "max-age=31536000"
+    reverse_proxy tba-votacao:3000
+}
