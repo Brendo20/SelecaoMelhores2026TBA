@@ -83,6 +83,7 @@ function renderManagement(data){
   const box=el('td');box.append(choice);
   const who=el('td','',b.name);who.append(el('small','',date(b.date)),el('small','',b.id));
   if(b.duplicate_count>1)who.append(el('small','duplicate-flag','Possível repetição: '+b.duplicate_count+' recebidas · '+b.duplicate_valid_count+' válidas'));
+  if(b.retired_choice_count)who.append(el('small','duplicate-flag','Contém escolha de atleta retirado do elenco. Confira esta cédula.'));
   const profile=el('td','',b.roleLabel);profile.append(el('small','',number(b.weight)+'×'));
   const status=el('td','',b.excluded?'Desconsiderada':'Válida');if(b.exclusion_reason)status.append(el('small','',b.exclusion_reason));
   row.append(box,who,el('td','',b.team||'Não informado'),profile,status);$('#ballots-list').append(row);

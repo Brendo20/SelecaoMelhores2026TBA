@@ -19,6 +19,23 @@ test('PostgreSQL: identificação livre, time Organização, pesos privados e re
  const open=()=>store.changeElection({status:'open',reason:'Teste de integração'});
  try{
   await migrate();await migrate();await seed();await seed();
+
+  await t.test('Elenco ativo troca Junior por Rodolfo sem reutilizar o ID',async()=>{
+   await reset();await open();
+   const goalies=(await database().query("SELECT id,name,team FROM players WHERE active AND position='goalkeeper'")).rows;
+   assert.equal(goalies.length,6);
+   assert.equal(goalies.filter(p=>p.team==='Branco').length,2);
+   assert.equal(goalies.filter(p=>p.team==='Vermelho').length,1);
+   assert.ok(goalies.some(p=>p.id==='goleiro-7'&&p.name==='Rodolfo'&&p.team==='Branco'));
+   assert.ok(!goalies.some(p=>p.id==='goleiro-4'));
+   await assert.rejects(()=>store.castBallot({...ballot(),selection:['goleiro-4',...selection.slice(1)]}),/Atleta inválido/);
+   const sent=await store.castBallot({...ballot(),selection:['goleiro-7',...selection.slice(1)]});
+   assert.ok(sent.receipt);
+   const snapshot=await store.adminSnapshot();
+   assert.equal(snapshot.results.find(r=>r.category==='selection'&&r.id==='goleiro-7').votes,1);
+   assert.ok(!snapshot.results.some(r=>r.id==='goleiro-4'));
+  });
+
   await t.test('Pesos internos seguem o perfil; Organização recebe seu próprio time',async()=>{
    await reset();await open();
    for(const role of ['capitao','organizacao','atleta','tecnico'])await store.castBallot({...ballot('Eleitor '+role,role),weight:999,weight_units:999});

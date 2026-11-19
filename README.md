@@ -98,3 +98,7 @@ Veja deploy/PRODUCAO.md. A instalação será executada pelo usuário no shell d
 Use um banco novo e vazio. Não importe os testes do Google. A votação antiga deve deixar de receber envios ao ativar a nova.
 
 Antes de migrations futuras: backup, registrar commit, aplicar migration, publicar e conferir os fluxos. Nunca apague cédulas ou execute down -v como rollback. Não volte automaticamente para o Google depois de receber votos reais no PostgreSQL sem reconciliar os registros.
+
+## Atualização dos goleiros
+
+A migration 004 retira Junior (goleiro do Vermelho, goleiro-4) dos candidatos e inclui Rodolfo (Branco, goleiro-7). Os IDs não são reutilizados e votos antigos não são transferidos. Eventuais cédulas com atleta retirado são preservadas e sinalizadas no admin para revisão. O elenco ativo continua com 54 atletas e 6 goleiros.
