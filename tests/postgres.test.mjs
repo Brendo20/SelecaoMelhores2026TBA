@@ -91,6 +91,40 @@ test('PostgreSQL: identificação livre, time Organização, pesos privados e re
    await assert.rejects(()=>store.moderateBallots({ids:[org.receipt,randomUUID()],excluded:true,reason:'Teste em lote'}),/não foi encontrada/);
    assert.equal((await store.adminSnapshot()).summary.validBallots,2);
   });
+
+  await t.test('Detalhes preservam escolhas, ordem e peso inclusive em cédula desconsiderada',async()=>{
+   await reset();await open();
+   const payload={...ballot('Consulta privada','organizacao'),gold:[...gold].reverse()};
+   const sent=await store.castBallot(payload);
+   const before=(await database().query('SELECT count(*)::int n FROM audit_events')).rows[0].n;
+   const detail=await store.ballotDetails(sent.receipt);
+   assert.equal(detail.ballot.name,'Consulta privada');assert.equal(detail.ballot.team,'Organização');assert.equal(detail.ballot.weight,1.5);
+   assert.equal(detail.selection.length,7);assert.equal(detail.selection[0].position,'Goleiro');assert.equal(detail.gold.length,10);
+   assert.deepEqual(detail.gold.map(c=>c.id),payload.gold);
+   assert.deepEqual(detail.gold.map(c=>c.rank),[1,2,3,4,5,6,7,8,9,10]);
+   assert.equal(detail.gold[0].basePoints,10);assert.equal(detail.gold[0].weightedPoints,15);
+   assert.equal(detail.totals.selection,10.5);assert.equal(detail.totals.gold,82.5);
+   assert.equal(detail.ballot.payload_hash,undefined);assert.equal(detail.ballot.request_id,undefined);
+   assert.equal((await database().query('SELECT count(*)::int n FROM audit_events')).rows[0].n,before);
+   await store.moderateBallots({ids:[sent.receipt],excluded:true,reason:'Conferência de duplicidade'});
+   const excluded=await store.ballotDetails(sent.receipt);assert.equal(excluded.ballot.excluded,true);
+   assert.equal(excluded.ballot.exclusionReason,'Conferência de duplicidade');
+   assert.equal(excluded.gold[0].weightedPoints,15);assert.equal(excluded.gold[0].effectivePoints,0);
+   assert.deepEqual(excluded.gold.map(c=>c.id),payload.gold);assert.equal(excluded.totals.selection,0);assert.equal(excluded.totals.gold,0);
+   assert.equal((await database().query('SELECT count(*)::int n FROM choices')).rows[0].n,17);
+   await assert.rejects(()=>store.ballotDetails('invalido'),/Identificador/);
+   await assert.rejects(()=>store.ballotDetails(randomUUID()),/não encontrada/);
+  });
+  await t.test('Detalhes incluem atleta retirado sem transferir seus votos',async()=>{
+   await reset();await open();const sent=await store.castBallot(ballot());
+   try{
+    await database().query('UPDATE players SET active=false WHERE id=$1',[keeper]);
+    const detail=await store.ballotDetails(sent.receipt),choice=detail.selection.find(c=>c.id===keeper);
+    assert.equal(choice.active,false);assert.equal(choice.weightedPoints,1);assert.equal(choice.effectivePoints,0);assert.equal(detail.totals.selection,6);
+    assert.equal(detail.selection.length,7);assert.equal(detail.ballot.excluded,false);
+   }finally{await database().query('UPDATE players SET active=true WHERE id=$1',[keeper]);}
+  });
+
   await t.test('Fluxo HTTP sem senha do eleitor; admin continua protegido',async()=>{
    await reset();
    const {createServer}=await import('../server.mjs');
@@ -107,11 +141,16 @@ test('PostgreSQL: identificação livre, time Organização, pesos privados e re
     await call('/api/admin','PATCH',{action:'election',status:'open',reason:'Teste HTTP'},cookie);
     const payload=ballot('Organizador HTTP','organizacao');
     const sent=await call('/api/vote','POST',payload);assert.equal(sent.status,200);assert.deepEqual(Object.keys(sent.data).sort(),['ok','receipt']);
+    assert.equal((await call('/api/admin?ballotId='+sent.data.receipt)).status,401);
+    const details=await call('/api/admin?ballotId='+sent.data.receipt,'GET',undefined,cookie);assert.equal(details.status,200);assert.equal(details.data.selection.length,7);assert.equal(details.data.gold.length,10);assert.equal(details.data.ballot.name,'Organizador HTTP');
+    assert.equal((await call('/api/admin?ballotId=invalido','GET',undefined,cookie)).status,400);
+    assert.equal((await call('/api/admin?ballotId='+randomUUID(),'GET',undefined,cookie)).status,404);
     const second=await call('/api/vote','POST',{...payload,requestId:randomUUID()});assert.equal(second.status,200);
     const config=await call('/api/config');assert.equal(config.data.roles,undefined);assert.equal(config.data.weights,undefined);
     const data=(await call('/api/admin','GET',undefined,cookie)).data;assert.equal(data.ballots[0].team,'Organização');assert.equal(data.summary.duplicateNames,1);
     await call('/api/admin','PATCH',{action:'moderate',ids:[second.data.receipt],excluded:true,reason:'Repetição conferida'},cookie);
     assert.equal((await call('/api/admin','GET',undefined,cookie)).data.summary.validBallots,1);
+    const excludedDetails=(await call('/api/admin?ballotId='+second.data.receipt,'GET',undefined,cookie)).data;assert.equal(excludedDetails.ballot.excluded,true);assert.equal(excludedDetails.totals.gold,0);
     assert.equal((await call('/api/results')).status,403);
     assert.equal((await call('/api/admin','DELETE',undefined,cookie)).status,200);
    }finally{await new Promise(resolve=>server.close(resolve));}

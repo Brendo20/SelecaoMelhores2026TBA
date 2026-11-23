@@ -5,8 +5,8 @@ let authenticated=false,busy=false,timer,page=1,snapshotData=null,pendingAction=
 const selectedIds=new Set();
 const number=value=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:1});
 const roleLabels={capitao:'Capitão',organizacao:'Organização',atleta:'Atleta',tecnico:'Técnico'};
-function showLogin(message=''){authenticated=false;clearInterval(timer);$('#login-panel').hidden=false;$('#dashboard').hidden=true;$('#login-error').textContent=message;$('#admin-rankings').replaceChildren();$('#ballots-list').replaceChildren();$('#audit-list').replaceChildren();selectedIds.clear();$('#admin-password').value='';}
-function showDashboard(){authenticated=true;$('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#admin-password').value='';clearInterval(timer);timer=setInterval(()=>{if(authenticated&&$('#auto-refresh').checked&&!document.hidden&&!selectedIds.size&&!$('#action-dialog').open)load();},30000);}
+function showLogin(message=''){authenticated=false;clearInterval(timer);if($('#ballot-detail-dialog').open)$('#ballot-detail-dialog').close();clearBallotDetails();$('#login-panel').hidden=false;$('#dashboard').hidden=true;$('#login-error').textContent=message;$('#admin-rankings').replaceChildren();$('#ballots-list').replaceChildren();$('#audit-list').replaceChildren();selectedIds.clear();$('#admin-password').value='';}
+function showDashboard(){authenticated=true;$('#login-panel').hidden=true;$('#dashboard').hidden=false;$('#admin-password').value='';clearInterval(timer);timer=setInterval(()=>{if(authenticated&&$('#auto-refresh').checked&&!document.hidden&&!selectedIds.size&&!$('#action-dialog').open&&!$('#ballot-detail-dialog').open)load();},30000);}
 function render(data){
  $('#admin-status').textContent=data.open?'● Votação aberta':'Votação encerrada ou ainda não aberta';
  $('#updated-at').textContent='Consultado em '+date(data.updatedAt);
@@ -47,7 +47,7 @@ async function load(){
   const response=await fetch('/api/admin?'+new URLSearchParams({page:String(page),query:$('#ballot-query').value,filter:$('#ballot-filter').value}),{cache:'no-store'}),data=await response.json();
   if(response.status===401){showLogin();return;}
   if(!response.ok){if(authenticated)$('#dashboard-error').textContent=data.error;else showLogin(data.error);return;}
-  if(selectedIds.size||$('#action-dialog').open)return;
+  if(selectedIds.size||$('#action-dialog').open||$('#ballot-detail-dialog').open)return;
   if(!authenticated)showDashboard();render(data);
  }catch{if(authenticated)$('#dashboard-error').textContent='Falha ao consultar. Os dados exibidos podem estar desatualizados.';else showLogin('Não foi possível conectar ao painel.');}
  finally{busy=false;$('#refresh').disabled=false;}
@@ -86,9 +86,10 @@ function renderManagement(data){
   if(b.retired_choice_count)who.append(el('small','duplicate-flag','Contém escolha de atleta retirado do elenco. Confira esta cédula.'));
   const profile=el('td','',b.roleLabel);profile.append(el('small','',number(b.weight)+'×'));
   const status=el('td','',b.excluded?'Desconsiderada':'Válida');if(b.exclusion_reason)status.append(el('small','',b.exclusion_reason));
-  row.append(box,who,el('td','',b.team||'Não informado'),profile,status);$('#ballots-list').append(row);
+  const detailsCell=el('td'),detailsButton=el('button','secondary','Ver voto');detailsButton.type='button';detailsButton.setAttribute('aria-label','Ver voto de '+b.name+' — '+b.id.slice(0,8));detailsButton.addEventListener('click',()=>viewBallot(b.id));detailsCell.append(detailsButton);
+  row.append(box,who,el('td','',b.team||'Não informado'),profile,status,detailsCell);$('#ballots-list').append(row);
  }
- if(!data.ballots.length){const row=el('tr'),cell=el('td','','Nenhuma cédula encontrada.');cell.colSpan=5;row.append(cell);$('#ballots-list').append(row);}
+ if(!data.ballots.length){const row=el('tr'),cell=el('td','','Nenhuma cédula encontrada.');cell.colSpan=6;row.append(cell);$('#ballots-list').append(row);}
  $('#page-label').textContent='Página '+data.pagination.page+' de '+data.pagination.pages+' · '+data.pagination.total+' cédulas';
  $('#previous-page').disabled=data.pagination.page<=1;$('#next-page').disabled=data.pagination.page>=data.pagination.pages;
  const labels={'ballot.exclude':'Cédula desconsiderada','ballot.restore':'Cédula restaurada','voter.create':'Eleitor cadastrado','voter.active':'Acesso de eleitor alterado','election.open':'Votação aberta','election.closed':'Votação encerrada','election.published':'Resultados publicados'};
@@ -118,5 +119,54 @@ document.querySelectorAll('[data-election]').forEach(button=>button.addEventList
  const status=button.dataset.election,title={open:'Abrir votação',closed:'Encerrar votação',published:'Publicar resultados'}[status];
  showAction({action:'election',status},title,status==='published'?'Os resultados ponderados válidos ficarão visíveis ao público. Encerre a votação antes.':status==='open'?'Novos envios serão aceitos. Resultados públicos anteriores ficarão ocultos.':'Novos envios serão bloqueados. Resultados só ficam públicos quando você publicar.');
 }));
+
+
+let detailRequest=0;
+function clearBallotDetails(){
+ detailRequest++;
+ $('#ballot-detail-content').hidden=true;
+ $('#ballot-detail-meta').replaceChildren();
+ $('#ballot-detail-selection').replaceChildren();
+ $('#ballot-detail-gold').replaceChildren();
+ $('#ballot-detail-notice').textContent='';
+ $('#ballot-detail-totals').textContent='';
+ $('#ballot-detail-status').textContent='';
+ $('#ballot-detail-title').textContent='Detalhes da cédula';
+}
+function renderBallotDetails(data){
+ const b=data.ballot;
+ $('#ballot-detail-title').textContent='Voto de '+b.name;
+ const meta=$('#ballot-detail-meta');meta.replaceChildren();
+ for(const [label,value] of [['Eleitor',b.name],['Time',b.team||'Não informado'],['Perfil informado',b.roleLabel],['Peso aplicado',number(b.weight)+'×'],['Data e hora',date(b.date)],['Protocolo',b.id],['Estado',b.excluded?'Desconsiderada':'Válida']]){
+  const group=el('div');group.append(el('dt','',label),el('dd','',value));meta.append(group);
+ }
+ if(b.excluded&&b.exclusionReason){const group=el('div');group.append(el('dt','','Motivo da desconsideração'),el('dd','',b.exclusionReason));meta.append(group);}
+ $('#ballot-detail-notice').textContent=b.excluded?'Esta cédula está desconsiderada e não soma em nenhuma das eleições. As escolhas e pontuações originais permanecem abaixo.':'A coluna “Na apuração” mostra a contribuição atual de cada escolha. Atletas retirados do elenco não entram na classificação.';
+ for(const [category,rows] of [['selection',data.selection],['gold',data.gold]]){
+  const body=$('#ballot-detail-'+category);body.replaceChildren();
+  for(const choice of rows){
+   const row=el('tr'),athlete=el('td','',choice.name);athlete.append(el('small','',choice.team));if(!choice.active)athlete.append(el('small','duplicate-flag','Retirado do elenco'));
+   if(category==='gold')row.append(el('td','',choice.rank+'º'));
+   row.append(athlete);
+   if(category==='gold')row.append(el('td','',number(choice.basePoints)));else row.append(el('td','',choice.position));
+   row.append(el('td','',number(choice.weightedPoints)),el('td','',number(choice.effectivePoints)));body.append(row);
+  }
+ }
+ $('#ballot-detail-totals').textContent='Contribuição atual: '+number(data.totals.selection)+' votos ponderados na Seleção e '+number(data.totals.gold)+' pontos na Bola de Ouro.';
+ $('#ballot-detail-content').hidden=false;
+}
+async function viewBallot(id){
+ clearBallotDetails();const request=detailRequest,dialog=$('#ballot-detail-dialog');
+ $('#ballot-detail-status').textContent='Carregando escolhas…';if(!dialog.open)dialog.showModal();
+ $('#ballot-detail-title').focus();
+ try{
+  const response=await fetch('/api/admin?'+new URLSearchParams({ballotId:id}),{cache:'no-store'}),data=await response.json();
+  if(request!==detailRequest||!dialog.open)return;
+  if(response.status===401){dialog.close();showLogin('Sessão expirada. Entre novamente.');return;}
+  if(!response.ok)throw new Error(data.error||'Não foi possível consultar esta cédula.');
+  renderBallotDetails(data);$('#ballot-detail-status').textContent='';
+ }catch(error){if(request===detailRequest&&dialog.open)$('#ballot-detail-status').textContent=error.message||'Falha ao consultar a cédula.';}
+}
+$('#ballot-detail-dialog').addEventListener('close',clearBallotDetails);
 
 load();

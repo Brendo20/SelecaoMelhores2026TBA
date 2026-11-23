@@ -102,3 +102,9 @@ Antes de migrations futuras: backup, registrar commit, aplicar migration, public
 ## Atualização dos goleiros
 
 A migration 004 retira Junior (goleiro do Vermelho, goleiro-4) dos candidatos e inclui Rodolfo (Branco, goleiro-7). Os IDs não são reutilizados e votos antigos não são transferidos. Eventuais cédulas com atleta retirado são preservadas e sinalizadas no admin para revisão. O elenco ativo continua com 54 atletas e 6 goleiros.
+
+## Consulta individual de cédulas
+
+No admin, cada linha possui Ver voto. A consulta mostra nome/perfil/time informados, data, protocolo, peso gravado, estado e motivo de desconsideração, além da Seleção e do ranking original da Bola de Ouro. A coluna Com peso preserva a pontuação original; Na apuração fica zerada para cédulas desconsideradas ou escolhas de atletas retirados.
+
+A consulta não altera votos, auditoria ou estado da eleição. O endpoint GET /api/admin?ballotId=UUID exige a mesma sessão administrativa e usa Cache-Control private, no-store. Não retorna credenciais, hashes de requisição nem os códigos legados. A lista pública e as rotas de votação não receberam dados individuais.

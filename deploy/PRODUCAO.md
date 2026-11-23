@@ -110,3 +110,17 @@ Antes de migrations futuras: backup → registrar commit → aplicar migration �
 - Esta migração começa sem votos da planilha. Não volte automaticamente para o Google depois de receber votos no PostgreSQL, porque isso dividiria os registros.
 - Para esta primeira entrada em produção, rollback operacional significa manter a eleição fechada e corrigir/reimplantar. Se for indispensável voltar ao sistema antigo, reconcilie explicitamente os votos recebidos.
 - Em versões futuras, prefira migrations compatíveis com a imagem anterior; restauração de dump só com análise dos votos posteriores ao backup.
+
+## Atualização: botão Ver voto
+
+Esta atualização não muda o schema e não requer migration nem seed.
+
+Na pasta do projeto da VM, confira alterações locais e depois execute um comando de cada vez:
+
+    git status --short --branch
+    git pull --ff-only origin feat/postgres-vm
+    docker compose build app
+    docker compose up -d --no-deps app
+    docker compose exec -T app node -e "fetch('http://127.0.0.1:3000/healthz').then(async r=>{console.log(r.status,await r.text());process.exit(r.ok?0:1)})"
+
+Se algum comando falhar, interrompa e confira a mensagem antes de continuar. Depois atualize a página /admin e use Ver voto na lista de cédulas. Somente o container da aplicação é recriado; banco e Caddy não precisam ser reiniciados.

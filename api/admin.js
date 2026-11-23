@@ -1,6 +1,6 @@
 import {handler,allow,requireOrigin,limit} from '../lib/http.js';
 import {passwordMatches,issueSession,hasSession,sessionCookie} from '../lib/admin-session.js';
-import {adminSnapshot,moderateBallots,changeElection} from '../lib/store.js';
+import {adminSnapshot,moderateBallots,changeElection,ballotDetails} from '../lib/store.js';
 import {fail} from '../lib/rules.js';
 export default handler(async(req,res)=>{
  res.setHeader('Cache-Control','private, no-store');res.setHeader('Vary','Cookie');res.setHeader('X-Robots-Tag','noindex, nofollow');
@@ -23,5 +23,6 @@ export default handler(async(req,res)=>{
   }
   return res.json(result);
  }
+ if(req.query?.ballotId!==undefined)return res.json(await ballotDetails(req.query.ballotId));
  return res.json(await adminSnapshot(req.query));
 });

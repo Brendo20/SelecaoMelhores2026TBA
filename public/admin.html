@@ -22,10 +22,23 @@
  <h2>Revisão das cédulas</h2><p>Desconsiderar retira a cédula inteira das duas eleições. O registro original e seu peso são preservados. Nomes repetidos são apenas um alerta: a decisão de desconsiderar é da organização.</p>
  <form id="ballot-search" class="search-controls"><label>Buscar nome ou time<input id="ballot-query" maxlength="100" type="search"></label><label>Estado<select id="ballot-filter"><option value="all">Todas</option><option value="valid">Válidas</option><option value="excluded">Desconsideradas</option><option value="duplicates">Possíveis duplicidades</option></select></label><button class="secondary">Buscar</button></form>
  <div class="control-buttons"><button id="exclude-selected" class="secondary" type="button">Desconsiderar selecionadas</button><button id="restore-selected" class="secondary" type="button">Restaurar selecionadas</button><span id="selection-count" role="status">0 selecionadas</span></div>
- <div class="table-scroll"><table><thead><tr><th><input id="select-page" type="checkbox" aria-label="Selecionar todas as cédulas desta página"></th><th>Data e eleitor</th><th>Time</th><th>Perfil informado / peso</th><th>Estado / motivo</th></tr></thead><tbody id="ballots-list"></tbody></table></div>
+ <div class="table-scroll"><table><thead><tr><th><input id="select-page" type="checkbox" aria-label="Selecionar todas as cédulas desta página"></th><th>Data e eleitor</th><th>Time</th><th>Perfil informado / peso</th><th>Estado / motivo</th><th>Detalhes</th></tr></thead><tbody id="ballots-list"></tbody></table></div>
  <div class="control-buttons"><button id="previous-page" class="secondary">← Anterior</button><span id="page-label"></span><button id="next-page" class="secondary">Próxima →</button></div>
 </section>
 <section class="admin-controls"><h2>Histórico de alterações</h2><p>Últimas 100 ações da organização. Horários de Brasília.</p><div class="table-scroll"><table><thead><tr><th>Quando</th><th>Ação</th><th>Registro</th><th>Motivo</th></tr></thead><tbody id="audit-list"></tbody></table></div></section>
 <dialog id="action-dialog"><form id="action-form"><h2 id="action-title">Confirmar alteração</h2><p id="action-description"></p><label for="action-reason">Motivo</label><textarea id="action-reason" minlength="3" maxlength="500" required rows="3"></textarea><p id="action-error" role="status"></p><div class="control-buttons"><button type="button" class="secondary" id="cancel-action">Cancelar</button><button type="submit" class="submit" id="confirm-action">Confirmar</button></div></form></dialog>
 
-</section></main></body></html>
+</section>
+<dialog id="ballot-detail-dialog" aria-labelledby="ballot-detail-title">
+ <div class="detail-heading"><h2 id="ballot-detail-title" tabindex="-1">Detalhes da cédula</h2><form method="dialog"><button class="secondary" aria-label="Fechar detalhes do voto">Fechar ×</button></form></div>
+ <p id="ballot-detail-status" role="status" aria-live="polite"></p>
+ <div id="ballot-detail-content" hidden>
+  <dl id="ballot-detail-meta" class="detail-meta"></dl>
+  <p id="ballot-detail-notice" class="detail-notice"></p>
+  <section aria-labelledby="detail-selection-title"><h3 id="detail-selection-title">Seleção do Campeonato</h3><p>Goleiro e seis jogadores de linha escolhidos nesta cédula.</p><div class="table-scroll"><table><thead><tr><th>Atleta / time</th><th>Posição</th><th>Com peso</th><th>Na apuração</th></tr></thead><tbody id="ballot-detail-selection"></tbody></table></div></section>
+  <section aria-labelledby="detail-gold-title"><h3 id="detail-gold-title">Bola de Ouro</h3><p>Ranking original, do primeiro ao décimo colocado.</p><div class="table-scroll"><table><thead><tr><th>Lugar</th><th>Atleta / time</th><th>Pontos-base</th><th>Com peso</th><th>Na apuração</th></tr></thead><tbody id="ballot-detail-gold"></tbody></table></div></section>
+  <p id="ballot-detail-totals"></p>
+  <p class="detail-footnote">Nome, perfil e time foram informados pelo eleitor. Esta consulta não altera a cédula nem seu estado.</p>
+ </div>
+</dialog>
+</main></body></html>
